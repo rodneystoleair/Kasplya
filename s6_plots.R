@@ -7,8 +7,12 @@ library(patchwork)
 data = c('Na', 'Mg', 'Al', 'Si', 'P', 'S', 'K', 'Ca', 'Ti', 'Mn', 'Fe', 'Cu', 'C',
          'N', 'Co', 'Ni')
 
-age_breaks = c(seq(-80, 2600, 40))
-depth_breaks = c(seq(0, 180, 10))
+# age_breaks = c(seq(-80, 2600, 100))
+# depth_breaks = c(seq(0, 180, 10))
+
+age_breaks = c(seq(0, 14000, 500))
+age_breaks = c(seq(-80, 14000, 500))
+depth_breaks = c(seq(0, 1800, 50))
 
 adm_data = tibble(depth = as.numeric(ages$depth), age = ages$median)
 # adm_data[adm_data < 0] = 0

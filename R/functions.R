@@ -34,7 +34,7 @@ find_depth_column = function(summary_df) {
   }
   return(select(summary_df, all_of(depth_col)) |> 
            rename(depth = !!depth_col) |> 
-           mutate(depth = round(as.numeric(depth), 0)))
+           mutate(depth = round(as.numeric(depth), 2)))
 }
 
 parse_variable = function(summary_df, variable_name) {

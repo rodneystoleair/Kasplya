@@ -3,7 +3,7 @@ source('R/functions.R')
 
 # Enter core name
 # core_name = readline('Enter exact core name: ')
-core_name = 'Kas-17_top'
+core_name = 'Kas-17'
 
 # Load tables from a directory
 # Read all file names from a 'data' directory
@@ -47,7 +47,7 @@ gran_match = grep('gran', all_files, ignore.case = T)
 gran_data = readxl::read_excel(all_files[gran_match])
 summary_gran = standardize_columns(gran_data) |> 
   arrange(depth) |> 
-  mutate(depth = round(depth, 0))
+  mutate(depth = round(depth, 2))
 
 # CNHS data loading
 # Check if there is a CNHS file in the directory
@@ -59,9 +59,9 @@ if (length(grep('cnhs', all_files, ignore.case = T)) == 0) {
 }
 
 # Parse variables
-variables = c('550', '950', '500HZ', 'volweight')
+variables = c('550', '950', '500HZ', 'объёмный')
 final_summary = find_depth_column(summary) |> 
-  mutate(depth = round(depth, 0))
+  mutate(depth = round(depth, 2))
 
 for (i in variables) {
   # name = parse_name(summary, i)
@@ -69,7 +69,10 @@ for (i in variables) {
   variable = parse_variable(summary, i)
   final_summary = left_join(final_summary, variable, by = 'depth')
 }
-final_summary = left_join(final_summary, summary_gran, by = 'depth')
+final_summary = left_join(final_summary, summary_gran, by = 'depth') |> 
+  rename(volweight = `объёмный вес, гр/см3`)
+
+  # left_join(ages, by = 'depth')
 
 # Assign the depth column to a variable and rename it into "depth"
 depth_col = find_depth_column(summary)
@@ -129,9 +132,9 @@ if (exists('water_depth') == T) {
 xrf = xrf |>
   na.omit() |> 
   mutate(depth = round(depth, 2)) |> 
-  # left_join(mutate(old_depths_to_new, depth = round(depth, 2)), by = 'depth') |> 
-  # mutate(old_depth = depth,
-  #        depth = new) |>
+  left_join(mutate(old_depths_to_new, depth = round(depth, 2)), by = 'depth') |>
+  mutate(old_depth = depth,
+         depth = new) |>
   left_join(ages, by = 'depth') |>
   relocate(depth)
 
@@ -139,8 +142,7 @@ xrf = xrf |>
 if (exists('old_depths_to_new')) {
   final_summary = final_summary |> 
     rename(depth = new,
-           old_depth = depth) |> 
-    select(-new)
+           old_depth = depth)
 }
 
 xrf_wide = xrf |> 
@@ -148,6 +150,9 @@ xrf_wide = xrf |>
   mutate(type = paste0(analyte, ', ', unit)) |> 
   relocate(unit, .before = analyte) |> 
   select(-analyte, -unit, -intensity, -bias) |> 
-  pivot_wider(names_from = type, values_from = value)
+  pivot_wider(names_from = type, values_from = value) |> 
+  select(-new)
 
-xrf_summary = left_join(xrf_wide, final_summary, by = c('depth'))
+xrf_summary = left_join(xrf_wide, 
+                        select(final_summary, -old_depth),
+                        by = c('depth'))

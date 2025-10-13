@@ -15,13 +15,13 @@ xrf_norm = xrf_wide |>
          P  = `P2O5, %` / 2.29) |> 
   select(-contains('%'), -median)
   
-kas_norm[kas_norm < 0] = 0
-kas_norm = kas_norm |> 
-  missMDA::MIPCA()
-kas_norm = as_tibble(kas_norm$res.imputePCA) |> 
-  left_join(select(mutate(ages, depth = as.numeric(depth)), -accrate),
-            by = 'depth') |> 
-  relocate(median, .after = depth)
+# kas_norm[kas_norm < 0] = 0
+# kas_norm = kas_norm |> 
+#   missMDA::MIPCA()
+# kas_norm = as_tibble(kas_norm$res.imputePCA) |> 
+#   left_join(select(mutate(ages, depth = as.numeric(depth)), -accrate),
+#             by = 'depth') |> 
+#   relocate(median, .after = depth)
 
 colnames(xrf_norm) = colnames(xrf_norm) |> 
   sapply(function (x) {
