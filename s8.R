@@ -17,22 +17,28 @@ strat = c(27, 77)
 additional_xrf_clr = readxl::read_excel('output/Kas-17_top_XRF_clr.xlsx')
 
 additional_xrf_clr_plot = additional_xrf_clr |> 
-  select(depth, median, Na2O:TiO2, MnO, Fe2O3, Cu, Sr, Pb, Rb, Co, Ni, Cr, Zr) |> 
-  pivot_longer(Na2O:Zr, names_to = 'analyte',
-               values_to = 'value')
-
-xrf_clr_plot = xrf_clr |> 
-  select(depth, median, Na2O:TiO2, MnO, Fe2O3, Cu, Sr, Pb, Rb, Co, Ni, Cr, Zr) |> 
+  select(depth, median, Na2O:TiO2, MnO, Fe2O3, Cu, Sr, Pb, Rb, Zr) |> 
   pivot_longer(Na2O:Zr, names_to = 'analyte',
                values_to = 'value') |> 
-  filter(depth <= 180)
+  mutate(analyte = fct_relevel(analyte, 'Na2O', 'MgO', 'Al2O3', 'SiO2', 'P2O5', 'K2O',
+                               'CaO', 'TiO2', 'MnO', 'Fe2O3', 'Cu',
+                               'Sr', 'Pb', 'Rb', 'Zr'))
+
+xrf_clr_plot = xrf_clr |> 
+  select(depth, median, Na2O:TiO2, MnO, Fe2O3, Cu, Sr, Pb, Rb, Zr) |> 
+  pivot_longer(Na2O:Zr, names_to = 'analyte',
+               values_to = 'value') |> 
+  filter(depth <= 180) |> 
+  mutate(analyte = fct_relevel(analyte, 'Na2O', 'MgO', 'Al2O3', 'SiO2', 'P2O5', 'K2O',
+                               'CaO', 'TiO2', 'MnO', 'Fe2O3', 'Cu',
+                               'Sr', 'Pb', 'Rb', 'Zr'))
 
 clr_plot = ggplot(xrf_clr_plot, aes(x = value, y = depth, color = analyte)) +
-  geom_lineh(size = 0.5) +
+  geom_lineh(size = 0.5,
+             linetype = 'dashed') +
   geom_lineh(data = additional_xrf_clr_plot,
              aes(x = value, y = depth, color = analyte),
              size = 0.5,
-             linetype = 'dashed',
              alpha = 0.8) +
   scale_y_reverse() +
   facet_geochem_gridh(vars(analyte)) +
@@ -60,10 +66,15 @@ ggsave(
 additional_summary = readxl::read_excel('output/Kas-17_top_summary.xlsx')
 
 additional_summary_plot = additional_summary |> 
-  select(-very_coarse_sand, -gravel) |> 
-  relocate(accrate, .after = depth) |> 
-  pivot_longer(accrate:coarse_sand, names_to = 'type',
-               values_to = 'value')
+  select(-very_coarse_sand, -gravel, -accrate) |> 
+  relocate(loi550, .after = depth) |> 
+  pivot_longer(loi550:coarse_sand, names_to = 'type',
+               values_to = 'value') |> 
+  mutate(type = fct_relevel(type, 'loi550', 'loi950', '500HZ',
+                               'volweight', 'clay', 'very_fine_silt',
+                               'fine_silt', 'medium_silt', 'coarse_silt',
+                               'very_coarse_silt', 'very_fine_sand', 
+                               'fine_sand', 'medium_sand', 'coarse_sand'))
 
 summary_plot = final_summary |> 
   select(-very_coarse_sand, -gravel, -old_depth) |> 
@@ -72,15 +83,19 @@ summary_plot = final_summary |>
          `500HZ` = `УМВ 500HZ`) |>
   filter(depth <= 180) |> 
   pivot_longer(loi550:coarse_sand, names_to = 'type',
-               values_to = 'value')
+               values_to = 'value') |> 
+  mutate(type = fct_relevel(type, 'loi550', 'loi950', '500HZ',
+                               'volweight', 'clay', 'very_fine_silt',
+                               'fine_silt', 'medium_silt', 'coarse_silt',
+                               'very_coarse_silt', 'very_fine_sand', 
+                               'fine_sand', 'medium_sand', 'coarse_sand'))
 
 sum_plot = ggplot(summary_plot,
                   aes(x = value, y = depth, color = type)) +
-  geom_lineh() +
+  geom_lineh(linetype = 'dashed') +
   geom_lineh(data = additional_summary_plot,
              aes(x = value, y = depth, color = type),
              size = 0.5,
-             linetype = 'dashed',
              alpha = 0.8) +
   scale_y_reverse() +
   facet_geochem_gridh(vars(type)) +

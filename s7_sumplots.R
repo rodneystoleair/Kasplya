@@ -1,7 +1,15 @@
 library(tidyverse)
+library(tidypaleo)
 
 # Read the CSV file
-climate_europe = read_csv('data/climate_reconstruction_europe.csv') |> 
+climate_url = 'https://download.pangaea.de/reference/111444/attachments/LegacyClimate_csv_files.zip'
+temp_zip = tempfile(fileext = ".zip")
+download.file(climate_url, destfile = temp_zip, mode = "wb")
+climate_tab_path = 'climate_reconstruction_europe.csv'
+unzip(temp_zip, files = climate_tab_path, exdir = tempdir())
+extracted_path = file.path(tempdir(), climate_tab_path)
+
+climate_europe = read_csv(extracted_path) |> 
   filter(Latitude >= 50, Latitude <= 60,
          `Age [ka BP] (median)` >= 0, `Age [ka BP] (median)` <= 14) |> 
   select(`Age [ka BP] (median)`, contains('T air (July)')) |> 
@@ -44,19 +52,23 @@ europe = ggplot(summary_curve, aes(x = median, y = ceiling, color = median)) +
 europe
 
 # NGRIP
-ngrip1 = readxl::read_excel('data/NGRIP_d18O_and_dust_5cm.xls',
-                            sheet = 2) |> 
+ngrip_url = "http://iceandclimate.nbi.ku.dk/data/NGRIP_d18O_and_dust_5cm.xls"
+temp = tempfile(fileext = ".xls")
+download.file(ngrip_url, destfile = temp, mode = "wb")
+
+ngrip1 = readxl::read_excel(temp, sheet = 2) |> 
   rename(depth = 1,
          dO18 = 2,
          age = 3) |> 
   select(-4)
-ngrip2 = readxl::read_excel('data/NGRIP_d18O_and_dust_5cm.xls',
-                            sheet = 3) |> 
-  select(-3) |> 
+
+ngrip2 = readxl::read_excel(temp, sheet = 3) |> 
+  select(-3) |>
   rename(depth = 1,
          dO18 = 2,
          age = 3) |> 
-  select(-4)
+  select(-4) |> 
+  filter(age > max(ngrip1$age))
 
 ngrip = bind_rows(ngrip1, ngrip2) |> 
   filter(age < 14000) |> 
